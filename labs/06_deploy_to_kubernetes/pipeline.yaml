@@ -1,3 +1,5 @@
+# note that tasks: git-clone, flake8, buildah, openshift-client not defined but installed from tekton hub or openshift
+
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:  
@@ -8,6 +10,7 @@ spec:
   params:
     - name: build-image
     - name: repo-url
+    - name: app-name
     - name: branch
       default: master
   tasks:
@@ -73,9 +76,10 @@ spec:
 
     - name: deploy
       taskRef:
-        name: echo
+        name: openshift-client
+        kind: ClusterTask      
       params:
-      - name: message
-        value: "Deploying $(params.branch) branch of $(params.repo-url) ..."
+      - name: SCRIPT
+        value: "oc create deploy $(params.app-name) --image=$(params.build-image)"
       runAfter:
         - build
