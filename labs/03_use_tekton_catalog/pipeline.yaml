@@ -1,22 +1,32 @@
+# instead of using the defined tasks.yaml
+# load from tekton hub (automatically kubectl apply as well as a defined task): tkn hub install task git-clone --version 0.8
+# then define persistence workspace with: kubectl apply -f pvc.yaml
+# below codes change to add the workspace as well as taskRef the new git-clone task vs. the original checkout task.
+
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:  
   name: cd-pipeline
 spec:
+  workspaces:
+    - name: pipeline-workspace
   params:
     - name: repo-url
     - name: branch
       default: "master"
   tasks:
     - name: clone
+      workspaces:
+        - name: output
+          workspace: pipeline-workspace
       taskRef:
-        name: checkout
+        name: git-clone
       params:
-      - name: repo-url
-        value: "$(params.repo-url)"
-      - name: branch
-        value: "$(params.branch)"
-
+      - name: url
+        value: $(params.repo-url)
+      - name: revision
+        value: $(params.branch)
+        
     - name: lint
       taskRef:
         name: echo
